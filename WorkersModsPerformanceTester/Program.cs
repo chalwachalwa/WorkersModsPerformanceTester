@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 
 namespace WorkersModsPerformanceTester
 {
@@ -9,7 +10,7 @@ namespace WorkersModsPerformanceTester
             Console.WriteLine("Hello, World!");
 
             var csvBuilder = new CsvBuilder();
-            csvBuilder.SetUpColumns("Mod number", "Mod name\\submod", "Lod files", "Path", "Warnings");
+            csvBuilder.SetUpColumns("Mod number", "Mod name\\submod", "Lod files", "Textures size [MB]", "Path", "Warnings");
             
             var workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
             var modFolders = Directory.GetDirectories(workshopPath);
@@ -34,7 +35,7 @@ namespace WorkersModsPerformanceTester
                 }
                 catch(ApplicationException e)
                 {
-                    csvBuilder.AddRow(modNumber,"","","", modFolder, e.Message);
+                    csvBuilder.AddRow(modNumber,"","","","", modFolder, e.Message);
                     continue;
                 }
 
@@ -43,11 +44,14 @@ namespace WorkersModsPerformanceTester
                 var subfolders = Directory.GetDirectories(modFolder);
                 foreach(var subfolder in subfolders)
                 {
-                    var appendSubmod = subfolders.Length < 1;
+                    var appendSubmod = subfolders.Length > 1;
                      
                     var filesWithLod = Directory.GetFiles(subfolder, "*.nmf").Where(x => x.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).Count();
+                    var texturesSize = Format.ByteSize(Directory.GetFiles(subfolder, "*.dds").Sum(x => new FileInfo(x).Length));
 
-                    csvBuilder.AddRow(modNumber, modName, filesWithLod.ToString(), subfolder);
+
+                    csvBuilder.AddRow(modNumber, appendSubmod ? modName + "\\" + Path.GetFileName(Path.GetDirectoryName(subfolder)) : modName
+                        , filesWithLod.ToString(), texturesSize, subfolder);
                 };
             }
 
@@ -85,5 +89,37 @@ namespace WorkersModsPerformanceTester
             }
             throw new ApplicationException("Invalid mod - no name");
         }
+
+        //Thank you stack overflow https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net/4967106#4967106
+        public static class Format
+        {
+            static string[] sizeSuffixes = {
+        "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+
+            public static string ByteSize(long size)
+            {
+                Debug.Assert(sizeSuffixes.Length > 0);
+
+                const string formatTemplate = "{0}{1:0.#} {2}";
+
+                if (size == 0)
+                {
+                    return string.Format(formatTemplate, null, 0, sizeSuffixes[0]);
+                }
+
+                var absSize = Math.Abs((double)size);
+                var fpPower = Math.Log(absSize, 1000);
+                var intPower = (int)fpPower;
+                var iUnit = intPower >= sizeSuffixes.Length
+                    ? sizeSuffixes.Length - 1
+                    : intPower;
+                var normSize = absSize / Math.Pow(1000, iUnit);
+
+                return string.Format(
+                    formatTemplate,
+                    size < 0 ? "-" : null, normSize, sizeSuffixes[iUnit]);
+            }
+        }
+
     }
 }
