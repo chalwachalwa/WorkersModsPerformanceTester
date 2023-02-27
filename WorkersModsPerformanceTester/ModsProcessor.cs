@@ -52,18 +52,17 @@ namespace WorkersModsPerformanceTester
                     _csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, e.Message);
                     continue;
                 }
-
-                if (!modTypes.Contains(modType)) continue;
+                
+                // Exclude mods that are not vechicles or buildings
+                if (!modTypes.Contains(modType)) continue; 
 
                 var subfolders = Directory.GetDirectories(modFolder, "*", SearchOption.AllDirectories);
-                int x = 0;
+
                 foreach (var subfolder in subfolders)
                 {
+                    // ignore empty subfolder or when models are nested
                     var files = Directory.GetFiles(subfolder);
-                    if (!files.Any()) continue; // empty subfolder or models are nested
-
-                    //if (Directory.GetParent(subfolder).Name == "784150")
-                    //    continue;
+                    if (!files.Any()) continue; 
 
                     if (subfolder.Contains("textur", StringComparison.InvariantCultureIgnoreCase)
                         || subfolder.Contains("sound", StringComparison.InvariantCultureIgnoreCase)
