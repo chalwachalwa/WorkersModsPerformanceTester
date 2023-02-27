@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Collections.Generic;
 
 namespace WorkersModsPerformanceTester
 {
@@ -12,7 +13,7 @@ namespace WorkersModsPerformanceTester
 
             var csvBuilder = new CsvBuilder();
             csvBuilder.SetUpColumns("Mod number", "Mod name\\submod", "Lod files", "Textures size[MB]", "Vertices", "Path", "Warnings");
-            
+
             var workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
             var modFolders = Directory.GetDirectories(workshopPath);
 
@@ -30,30 +31,43 @@ namespace WorkersModsPerformanceTester
                     progress.Report((double)i++ / modFolders.Length);
 
                     var modNumber = Path.GetFileName(Path.GetDirectoryName(modFolder));
-                    string modName;
+
                     string modType;
-                
+                    string modName;
                     try
                     {
-                        modName = GetModName(modFolder, out modType);
+                        Dictionary<string, string> modProperties;
+                        modProperties = GetScriptProperties(Path.Combine(modFolder, "workshopconfig.ini"));
+                        modType = modProperties["$ITEM_TYPE"];
+                        modName = modProperties["$ITEM_NAME"];
                     }
-                    catch(ApplicationException e)
+                    catch (KeyNotFoundException e)
                     {
-                        csvBuilder.AddRow(modNumber,"","","","", modFolder, e.Message);
+                        csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, "Mod invalid - missing property in workshopconfig.ini");
+                        continue;
+                    }
+                    catch (ApplicationException e)
+                    {
+                        csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, e.Message);
                         continue;
                     }
 
                     if (!modTypes.Contains(modType)) continue;
 
                     var subfolders = Directory.GetDirectories(modFolder, "*", SearchOption.AllDirectories);
-
-                    foreach(var subfolder in subfolders)
+                    int x = 0;
+                    foreach (var subfolder in subfolders)
                     {
-                        var a = Directory.GetParent(subfolder).Name;
-                        if (Directory.GetParent(subfolder).Name == "784150")
-                            continue;
+                        var files = Directory.GetFiles(subfolder);
+                        if (!files.Any()) continue; // empty subfolder or models are nested
 
-                        if (subfolder.Contains("textur") || subfolder.Contains("sound") || subfolder.EndsWith("joints")) continue;
+                        //if (Directory.GetParent(subfolder).Name == "784150")
+                        //    continue;
+
+                        if (subfolder.Contains("textur", StringComparison.InvariantCultureIgnoreCase)
+                            || subfolder.Contains("sound", StringComparison.InvariantCultureIgnoreCase)
+                            || subfolder.Contains("joint", StringComparison.InvariantCultureIgnoreCase)
+                            || subfolder.Contains("resource", StringComparison.InvariantCultureIgnoreCase)) continue;
                         //todo: handle textures folders
 
                         var nmfFiles = Directory.GetFiles(subfolder, "*.nmf");
@@ -61,22 +75,42 @@ namespace WorkersModsPerformanceTester
                         {
                             var fileName = Path.GetFileName(x);
                             var fileNameLongerThanTwo = fileName.Remove(fileName.Length - 4, 4).Length > 2;
-                            return  fileNameLongerThanTwo && fileName.Contains("LOD", StringComparison.InvariantCultureIgnoreCase);
+                            return fileNameLongerThanTwo && fileName.Contains("LOD", StringComparison.InvariantCultureIgnoreCase);
                         }).ToArray();
 
                         var texturesSize = Directory.GetFiles(subfolder, "*.dds")
                             .Sum(x => new FileInfo(x).Length)
                             .GetHumanReadableFileSize();
 
-                        var model = nmfFiles.Except(filesWithLod)
+                        var modelPath = nmfFiles.Except(filesWithLod)
                             .FirstOrDefault(x => !x.EndsWith("joint.nmf") && !x.EndsWith("anim.nmf"));
 
-                        if (model == null) 
+                        if (modelPath == null)
                         {
-                            csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, "Mod invalid - No model");
-                            continue;
+                            //check for variants
+                            string modelPathRelative = null;
+                            try
+                            {
+                                modelPathRelative = ReadRelatedModel(Path.Combine(subfolder, "renderconfig.ini"));
+                            }
+                            catch(ApplicationException e)
+                            {
+                                csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, e.Message);
+                                continue;
+                            }
+                            
+                            if(modelPathRelative.Contains("../"))
+                            {
+                                modelPath = Path.GetFullPath(Path.Combine(subfolder, modelPathRelative));
+                                // todo: maybe select that as variant to avoid duplicates?
+                            }
+                            else
+                            {
+                                csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, "Mod invalid - No model");
+                                continue;
+                            }
                         }
-                        var vertices = ReadVertices(model).ToString();
+                        var vertices = ReadVertices(modelPath).ToString();
 
                         var appendSubmod = subfolders.Length > 1;
                         var name = appendSubmod ? modName + "\\" + new DirectoryInfo(Path.GetDirectoryName(subfolder + "\\")).Name : modName;
@@ -89,7 +123,7 @@ namespace WorkersModsPerformanceTester
             {
                 File.WriteAllText("result.csv", csvBuilder.ToString());
             }
-            catch(Exception e)
+            catch (IOException e)
             {
                 Console.WriteLine(e);
             }
@@ -122,85 +156,100 @@ namespace WorkersModsPerformanceTester
                             if (numLods != 1) throw new ApplicationException();
                             buffer = br.ReadBytes(8);
                             return BitConverter.ToInt32(buffer, 4);
-                        } 
+                        }
                         else if (nodeType == 1)
                         {
                             buffer = br.ReadBytes(288);
                         }
                         else
                         {
-                            throw new ApplicationException();
+                            throw new ApplicationException("Node type 2 unhandled");
                         }
                     }
-                    
+
                 }
             }
-            throw new ApplicationException();
+            throw new ApplicationException("Cannot read vertices");
         }
 
-        private static string GetModName(string modPath, out string modType)
-        {
-            string modTypeValue = null;
+        //private static readonly string[] ScriptProperties = { "$ITEM_TYPE", "" };
 
-            string configPath = Path.Combine(modPath, "workshopconfig.ini");
+        private static Dictionary<string, string> GetScriptProperties(string path)
+        {
+            var results = new Dictionary<string, string>();
+
             try
             {
-                using (var fileReader = new StreamReader(configPath))
+                using (var fileReader = new StreamReader(path))
                 {
                     while (!fileReader.EndOfStream)
                     {
                         var line = fileReader.ReadLine();
-                        if (line.Contains("$ITEM_TYPE"))
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        var words = line.Split(" ");
+
+                        string propertyName;
+                        if (words.Length > 1)
                         {
-                            modTypeValue = line.Replace("\"", "").Replace("$ITEM_TYPE", "").Trim();
+                            propertyName = words[0];
+                            if (!propertyName.StartsWith('$')) continue;
+                        }
+                        else
+                        {
+                            continue;
                         }
 
-                        if (line.Contains("$ITEM_NAME"))
+                        results.TryAdd(propertyName, line.Replace("\"", "").Replace(propertyName, "").Trim());
+                    }
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+                throw new ApplicationException("Invalid mod - no workshopconfig.ini", e);
+            }
+            return results;
+        }
+
+        private static string ReadRelatedModel(string path)
+        {
+            try
+            {
+                using (var fileReader = new StreamReader(path))
+                {
+                    while (!fileReader.EndOfStream)
+                    {
+                        string line = fileReader.ReadLine().Trim();
+                        var words = line.Split(" ");
+                        string propertyName;
+                        if (words.Length > 1)
                         {
-                            modType = string.IsNullOrEmpty(modTypeValue) ? "Invalid" : modTypeValue;
-                            return line.Replace("\"", "").Replace("$ITEM_NAME", "").Trim();
+                            propertyName = words.First();
+                            if (propertyName == "MODEL")
+                            {
+                                return words.Last();
+                            }
+                            else
+                            {
+                                continue;
+                            }
                         }
                     }
                 }
             }
-            catch(FileNotFoundException e)
+            catch (FileNotFoundException e)
             {
-                throw new ApplicationException("Invalid mod - no workshopconfig.ini", e);
+                throw new ApplicationException("Invalid mod - no renderconfig.ini", e);
             }
-            throw new ApplicationException("Invalid mod - no name");
+            throw new ApplicationException("Invalid mod - no model info in renderconfig.ini");
         }
     }
     
-    //Thank you stack overflow https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net/4967106#4967106
     public static class Format
     {
-        static string[] sizeSuffixes = {
-        "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-
         public static string GetHumanReadableFileSize(this long size)
-        {
-            Debug.Assert(sizeSuffixes.Length > 0);
-
-            const string formatTemplate = "{0}{1:0.#} {2}";
-
-            //if (size == 0)
-            //{
-            //    return string.Format(formatTemplate, null, 0, sizeSuffixes[0]);
-            //}
-
-            //var absSize = Math.Abs((double)size);
-            //var fpPower = Math.Log(absSize, 1000);
-            //var intPower = (int)fpPower;
-            //var iUnit = intPower >= sizeSuffixes.Length
-            //    ? sizeSuffixes.Length - 1
-            //    : intPower;
-            //var normSize = absSize / Math.Pow(1000, 2);
+        {  
             var normSize = size / Math.Pow(1024, 2);
-
-            return String.Format("{0:0.000}", normSize);
-            //return string.Format(
-            //    formatTemplate,
-            //    size < 0 ? "-" : null, normSize, sizeSuffixes[2]);
+            return String.Format("{0:0.000}", normSize); 
         }
     }
 }
