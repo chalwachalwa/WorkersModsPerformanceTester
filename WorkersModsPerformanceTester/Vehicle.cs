@@ -31,11 +31,6 @@ namespace WorkersModsPerformanceTester
 
             var selectedMaterialFile = materialFiles.Where(x => !x.Contains("_") && !x.Contains("LOD", StringComparison.InvariantCultureIgnoreCase))
                 .Single(x => x != "main.mtl"); //exclude skins and lods
-            //string selectedMaterialFile = "";
-            //if (selectedMaterialFiles.Count() > 1)
-            //{
-            //    selectedMaterialFile = selectedMaterialFiles; // handle people that copy blender's main.mtl 
-            //}
 
             MaterialPath = Path.Combine(FolderPath, selectedMaterialFile);
 
@@ -43,10 +38,10 @@ namespace WorkersModsPerformanceTester
             TexturesSize = CountTexturesSize(texturesPaths);
 
             LODsCount = nmfFiles.Count(x => x.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToString();
-            Vertices = ReadFacets(NmfPath).ToString();
+            Faces = ReadFacets(NmfPath).ToString();
             if (jointExist)
             {
-                Vertices += ReadFacets(Path.Combine(FolderPath, jointPath)).ToString();
+                Faces += ReadFacets(Path.Combine(FolderPath, jointPath)).ToString();
             }
 
         }

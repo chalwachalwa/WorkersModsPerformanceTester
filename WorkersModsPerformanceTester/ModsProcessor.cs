@@ -64,7 +64,7 @@ namespace WorkersModsPerformanceTester
                 }
                 foreach (var model in mod.Models)
                 {
-                    _csvBuilder.AddRow(mod.Id, mod.Type,model.Name, model.LODsCount, model.TexturesSize, model.Vertices, model.FolderPath);
+                    _csvBuilder.AddRow(mod.Id, mod.Type,model.Name, model.LODsCount, model.TexturesSize, model.Faces, model.FolderPath);
                 }
             }
         }

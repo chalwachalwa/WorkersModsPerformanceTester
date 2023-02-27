@@ -14,7 +14,7 @@ namespace WorkersModsPerformanceTester
         virtual public string MaterialPath { get; protected set; }
         virtual public string LODsCount { get; protected set; }
         virtual public string TexturesSize { get; protected set; }
-        virtual public string Vertices { get; protected set; }
+        virtual public string Faces { get; protected set; }
 
         virtual public string[] PropertiesToRead { get; protected set; }
 
@@ -157,9 +157,7 @@ namespace WorkersModsPerformanceTester
                             var modelNumChilds = BitConverter.ToInt16(br.ReadBytes(2), 0);
                             br.ReadBytes(152);
 
-                            //buffer = br.ReadBytes(228);
                             var modelNumLODs = BitConverter.ToInt32(br.ReadBytes(4), 0);
-                            //if (numLods != 1) throw new ApplicationException();
                             for (int j = 0; j < modelNumLODs; j++)
                             {
                                 var modelLODSize = BitConverter.ToInt32(br.ReadBytes(4), 0);
@@ -197,13 +195,13 @@ namespace WorkersModsPerformanceTester
                                 {
                                     br.ReadBytes(10 * 4 * numIndices / 3);
                                 }
-
-
-
-                                br.ReadBytes(12 * numSubsets);
+                                for (int k = 0; k < numSubsets; k++)
+                                {
+                                    br.ReadBytes(10);
+                                    var subsetNumBones = BitConverter.ToInt16(br.ReadBytes(2), 0);
+                                    br.ReadBytes(2 * subsetNumBones);
+                                }
                             }
-                            
-
                         }
                         else if (nodeType == 1)
                         {
@@ -211,15 +209,16 @@ namespace WorkersModsPerformanceTester
                         }
                         else if(nodeType == 2)
                         {
-                            debugMax++;
-                        }else
+                            throw new NotImplementedException("Node type 2 unhandled");
+                        }
+                        else
                         {
-                            throw new ApplicationException("Node type 2 unhandled");
+                            throw new ApplicationException("Node type unknown");
                         }
                     }
                 }
             }
-            return vertices;
+            return faces;
         }
     }
 }
