@@ -12,7 +12,7 @@ namespace WorkersModsPerformanceTester
         private string[] _columnsNames = new string[]{ };
         private StringBuilder _stringBuilder = new StringBuilder();
 
-        public CsvBuilder(char columnSeparator = '\t')
+        public CsvBuilder(char columnSeparator = ';')
         {
             _columnSeparator = columnSeparator;
         }
