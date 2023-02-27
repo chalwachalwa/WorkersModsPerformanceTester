@@ -30,7 +30,7 @@ namespace WorkersModsPerformanceTester
             TexturesSize = CountTexturesSize(texturesPaths);
 
             LODsCount = renderProperties.Count(x => x.Key.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToString();
-            Vertices = ReadVertices(NmfPath).ToString();
+            Vertices = ReadFacets(NmfPath).ToString();
         } 
     }
 }

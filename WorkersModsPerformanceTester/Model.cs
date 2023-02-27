@@ -124,51 +124,102 @@ namespace WorkersModsPerformanceTester
             return results;
         }
 
-        protected static int ReadVertices(string path)
+        protected static int ReadFacets(string path)
         {
             int  debugMax = 0;
+            var faces = 0;
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
                 using (var br = new BinaryReader(fs))
                 {
                     // header
-                    var buffer = br.ReadBytes(20);
-                    var numMaterials = BitConverter.ToInt32(buffer, 8);
-                    var numNodes = BitConverter.ToInt32(buffer, 12);
-
-                    if (numNodes > debugMax) debugMax = numNodes;
-                    Console.WriteLine(debugMax);
+                    var header = Encoding.ASCII.GetString(br.ReadBytes(8));
+                    var numMaterials = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                    var numNodes = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                    var sizeTotal =  BitConverter.ToInt32(br.ReadBytes(4), 0);
 
                     // materials
-                    var offset = numMaterials * 64;
-                    buffer = br.ReadBytes(offset);
+                    for (int i = 0; i < numMaterials; i++)
+                    {
+                        var materialName = Encoding.UTF8.GetString(br.ReadBytes(64));
+                    }
+
                     for (int i = 0; i < numNodes; i++)
                     {
                         // node type
-                        buffer = br.ReadBytes(4);
-                        var nodeType = BitConverter.ToInt32(buffer, 0);
+                        var nodeType = BitConverter.ToInt32(br.ReadBytes(4), 0);
 
                         if (nodeType == 0)
                         {
-                            buffer = br.ReadBytes(228);
-                            var numLods = BitConverter.ToInt32(buffer, 224);
-                            if (numLods != 1) throw new ApplicationException();
-                            buffer = br.ReadBytes(8);
+                            var modelSize = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                            var modelName = Encoding.UTF8.GetString(br.ReadBytes(64));
+                            var modelParentId = BitConverter.ToInt16(br.ReadBytes(2), 0);
+                            var modelNumChilds = BitConverter.ToInt16(br.ReadBytes(2), 0);
+                            br.ReadBytes(152);
+
+                            //buffer = br.ReadBytes(228);
+                            var modelNumLODs = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                            //if (numLods != 1) throw new ApplicationException();
+                            for (int j = 0; j < modelNumLODs; j++)
+                            {
+                                var modelLODSize = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                var numVertices = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                var numIndices = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                faces += numIndices / 3;
+                                var numSubsets = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                var numMorphTargets = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                var vertexAttributes = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                var morphMask = BitConverter.ToInt32(br.ReadBytes(4), 0);
+                                br.ReadBytes(2 * numIndices);
+                                br.ReadBytes(12 * numVertices);
+                                
+                                if ((vertexAttributes & (1 << 3)) == (1 << 3))
+                                {
+                                    br.ReadBytes(12 * numVertices);
+                                }
+                                if ((vertexAttributes & (1 << 4)) == (1 << 4))
+                                {
+                                    br.ReadBytes(12 * numVertices);
+                                }
+                                if ((vertexAttributes & (1 << 5)) == (1 << 5))
+                                {
+                                    br.ReadBytes(12 * numVertices);
+                                }
+                                if ((vertexAttributes & (1 << 8)) == (1 << 8))
+                                {
+                                    br.ReadBytes(8 * numVertices);
+                                }
+                                if ((vertexAttributes & (1 << 16)) == (1 << 16))
+                                {
+                                    br.ReadBytes(12 * numVertices);
+                                }
+                                if ((vertexAttributes & (1 << 18)) == (1 << 18))
+                                {
+                                    br.ReadBytes(10 * 4 * numIndices / 3);
+                                }
+
+
+
+                                br.ReadBytes(12 * numSubsets);
+                            }
                             
-                            return BitConverter.ToInt32(buffer, 4);
+
                         }
                         else if (nodeType == 1)
                         {
-                            buffer = br.ReadBytes(288);
+                            br.ReadBytes(288);
                         }
-                        else
+                        else if(nodeType == 2)
+                        {
+                            debugMax++;
+                        }else
                         {
                             throw new ApplicationException("Node type 2 unhandled");
                         }
                     }
                 }
             }
-            throw new ApplicationException("Cannot read vertices");
+            return vertices;
         }
     }
 }
