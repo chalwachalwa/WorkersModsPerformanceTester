@@ -63,7 +63,7 @@ namespace WorkersModsPerformanceTester
                 }
                 foreach (var model in mod.Models)
                 {
-                    _csvBuilder.AddRow(mod.Id, mod.Type,model.Name, model.LODsCount, model.TexturesSize, model.Faces, model.FolderPath);
+                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount, model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
                 }
             }
         }
@@ -76,15 +76,16 @@ namespace WorkersModsPerformanceTester
                 modProperties = GetScriptProperties(Path.Combine(mod.Folder, "workshopconfig.ini"));
                 mod.Type = modProperties["$ITEM_TYPE"];
                 mod.Name = modProperties["$ITEM_NAME"];
+                mod.AuthorId = modProperties["$OWNER_ID"];
             }
             catch (KeyNotFoundException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "","", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
+                _csvBuilder.AddRow(mod.Id, "", "", "","", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
                 throw e;
             }
             catch (ApplicationException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "","", "", "", mod.Folder, e.Message);
+                _csvBuilder.AddRow(mod.Id, "","", "","", "", "", "", mod.Folder, e.Message);
                 throw e;
             }
         }

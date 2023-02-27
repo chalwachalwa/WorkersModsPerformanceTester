@@ -14,8 +14,8 @@ namespace WorkersModsPerformanceTester
         virtual public string NmfPath { get; protected set; }
         virtual public string MaterialPath { get; protected set; }
         virtual public string LODsCount { get; protected set; }
-        virtual public string TexturesSize { get; protected set; }
-        virtual public string Faces { get; protected set; }
+        virtual public long TexturesSize { get; protected set; }
+        virtual public int Faces { get; protected set; }
         virtual public string Score { get { return String.Format("{0:0.000}", CalculateScore());  } }
         virtual public string[] PropertiesToRead { get; protected set; }
 
@@ -49,7 +49,7 @@ namespace WorkersModsPerformanceTester
             return result;
         }
 
-        protected virtual string CountTexturesSize(Dictionary<string, string> texturesPaths)
+        protected virtual long CountTexturesSize(Dictionary<string, string> texturesPaths)
         {
             var filteredTextures = texturesPaths.Where(x => x.Key.Contains("$TEXTURE"))
                 .Where(x => !x.Value.Contains("blankspecular.dds") && !x.Value.Contains("blankbump.dds"))
@@ -72,7 +72,7 @@ namespace WorkersModsPerformanceTester
                       // todo: should I count it?
                 }
             }
-            return sum.GetHumanReadableFileSize();
+            return sum;
         }
 
         protected readonly string[] texturesPropertiesToRead = new[] { "$TEXTURE_MTL", "$TEXTURE" };
@@ -249,13 +249,13 @@ namespace WorkersModsPerformanceTester
             double texturesValue = 0.0;
             if (Type == "WORKSHOP_ITEMTYPE_VEHICLE")
             {
-                facesValue = 0.5 - 0.5 * Math.Tanh(((double)int.Parse(Faces) - vehiclesXOffsetFaces - vehiclesMeanFaces) / (2 * vehiclesStandardDeviationFaces));
-                texturesValue = 0.5 - 0.5 * Math.Tanh(((double)double.Parse(TexturesSize) - vehiclesXOffsetTextures - vehiclesMeanTextures) / (2 * vehiclesStandardDeviationTextures));
+                facesValue = 0.5 - 0.5 * Math.Tanh((Faces - vehiclesXOffsetFaces - vehiclesMeanFaces) / (2 * vehiclesStandardDeviationFaces));
+                texturesValue = 0.5 - 0.5 * Math.Tanh((TexturesSize - vehiclesXOffsetTextures - vehiclesMeanTextures) / (2 * vehiclesStandardDeviationTextures));
             }
             else if (Type == "WORKSHOP_ITEMTYPE_BUILDING")
             {
-                facesValue = 0.5 - 0.5 * Math.Tanh(((double)int.Parse(Faces) - buildingsXOffsetFaces - buildingsMeanFaces) / (2 * buildingsStandardDeviationFaces));
-                texturesValue = 0.5 - 0.5 * Math.Tanh(((double)double.Parse(Faces) - buildingsXOffsetTextures - buildingsMeanTextures) / (2 * buildingsStandardDeviationTextures));
+                facesValue = 0.5 - 0.5 * Math.Tanh((Faces - buildingsXOffsetFaces - buildingsMeanFaces) / (2 * buildingsStandardDeviationFaces));
+                texturesValue = 0.5 - 0.5 * Math.Tanh((TexturesSize - buildingsXOffsetTextures - buildingsMeanTextures) / (2 * buildingsStandardDeviationTextures));
             }
 
             return lodCoeficient * lodValue + facesCoeficient * facesValue + texturesCoeficient * texturesValue;

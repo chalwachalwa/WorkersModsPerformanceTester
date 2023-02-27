@@ -17,7 +17,7 @@ namespace WorkersModsPerformanceTester
             Console.WriteLine("Processing...");
 
             var csvBuilder = new CsvBuilder();
-            csvBuilder.SetUpColumns("Mod number", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Path", "Warnings");
+            csvBuilder.SetUpColumns("Mod number", "AuthorId", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Score", "Path", "Warnings");
 
             using (var progress = new ProgressBar())
             {
@@ -26,7 +26,7 @@ namespace WorkersModsPerformanceTester
             }
             try
             {
-                File.WriteAllText("result3.csv", csvBuilder.ToString());
+                File.WriteAllText("result4.csv", csvBuilder.ToString());
             }
             catch (IOException e)
             {

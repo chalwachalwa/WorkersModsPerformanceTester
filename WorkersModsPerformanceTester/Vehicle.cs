@@ -39,10 +39,10 @@ namespace WorkersModsPerformanceTester
             TexturesSize = CountTexturesSize(texturesPaths);
 
             LODsCount = nmfFiles.Count(x => x.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToString();
-            Faces = ReadFacets(NmfPath).ToString();
+            Faces = ReadFacets(NmfPath);
             if (jointExist)
             {
-                Faces += ReadFacets(Path.Combine(FolderPath, jointPath)).ToString();
+                Faces += ReadFacets(Path.Combine(FolderPath, jointPath));
             }
 
         }
