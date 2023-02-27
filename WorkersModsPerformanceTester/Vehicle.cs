@@ -9,7 +9,12 @@ namespace WorkersModsPerformanceTester
     internal class Vehicle : Model
     {
         private string _sciptIniPath;
-        
+
+        public Vehicle(string path)
+        {
+            _sciptIniPath = path;
+        }
+
         // joints
     }
 }

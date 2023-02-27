@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,11 @@ namespace WorkersModsPerformanceTester
 {
     internal class ModsProcessor
     {
-        private readonly string[] modTypes = new[] { "WORKSHOP_ITEMTYPE_BUILDING", "WORKSHOP_ITEMTYPE_VEHICLE" };
+        // others not handled
+        // WORKSHOP_ITEMTYPE_BUILDINGEDITOR_ELEMENT
+        // WORKSHOP_ITEMTYPE_VEHICLESKIN
+        // WORKSHOP_ITEMTYPE_BUILDINGSKIN
+        private readonly string[] _modTypesAllowedToProcess = new[] { "WORKSHOP_ITEMTYPE_BUILDING", "WORKSHOP_ITEMTYPE_VEHICLE" };
 
         private readonly CsvBuilder _csvBuilder;
         private readonly ProgressBar _progressBar;
@@ -43,68 +48,79 @@ namespace WorkersModsPerformanceTester
                 }
                 
                 // Exclude mods that are not vechicles or buildings
-                if (!modTypes.Contains(mod.Type)) continue; 
+                if (!_modTypesAllowedToProcess.Contains(mod.Type)) continue;
 
-                foreach (var subfolder in mod.Subfolders)
+                if (mod.Type == "WORKSHOP_ITEMTYPE_BUILDING")
                 {
-                    // ignore empty subfolder or when models are nested
-                    var files = Directory.GetFiles(subfolder);
-                    if (!files.Any()) continue; 
+                    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "renderconfig.ini")).Select(x => new Building(x)).ToArray();
+                    mod.Models.AddRange(buildings);
+                }
+                else if (mod.Type == "WORKSHOP_ITEMTYPE_VEHICLE")
+                {
+                    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "script.ini"))
+                        .Select(x => new Vehicle(x)).ToArray();
+                    mod.Models.AddRange(buildings);
+                }
 
-                    if (subfolder.Contains("textur", StringComparison.InvariantCultureIgnoreCase)
-                        || subfolder.Contains("sound", StringComparison.InvariantCultureIgnoreCase)
-                        || subfolder.Contains("joint", StringComparison.InvariantCultureIgnoreCase)
-                        || subfolder.Contains("resource", StringComparison.InvariantCultureIgnoreCase)) continue;
-                    //todo: handle textures folders
-                    
-                    var nmfFiles = Directory.GetFiles(subfolder, "*.nmf");
-                    var filesWithLod = nmfFiles.Where(x =>
-                    {
-                        var fileName = Path.GetFileName(x);
-                        var fileNameLongerThanTwo = fileName.Remove(fileName.Length - 4, 4).Length > 2;
-                        return fileNameLongerThanTwo && fileName.Contains("LOD", StringComparison.InvariantCultureIgnoreCase);
-                    }).ToArray();
+                //foreach (var subfolder in mod.Subfolders)
+                //{
+                //    // ignore empty subfolder or when models are nested
+                //    var files = Directory.GetFiles(subfolder);
+                //    if (!files.Any()) continue;
 
-                    var texturesSize = Directory.GetFiles(subfolder, "*.dds")
-                        .Sum(x => new FileInfo(x).Length)
-                        .GetHumanReadableFileSize();
+                //    if (subfolder.Contains("textur", StringComparison.InvariantCultureIgnoreCase)
+                //        || subfolder.Contains("sound", StringComparison.InvariantCultureIgnoreCase)
+                //        || subfolder.Contains("joint", StringComparison.InvariantCultureIgnoreCase)
+                //        || subfolder.Contains("resource", StringComparison.InvariantCultureIgnoreCase)) continue;
+                //    //todo: handle textures folders
 
-                    var modelPath = nmfFiles.Except(filesWithLod)
-                        .FirstOrDefault(x => !x.EndsWith("joint.nmf") && !x.EndsWith("anim.nmf"));
+                //    var nmfFiles = Directory.GetFiles(subfolder, "*.nmf");
+                //    var filesWithLod = nmfFiles.Where(x =>
+                //    {
+                //        var fileName = Path.GetFileName(x);
+                //        var fileNameLongerThanTwo = fileName.Remove(fileName.Length - 4, 4).Length > 2;
+                //        return fileNameLongerThanTwo && fileName.Contains("LOD", StringComparison.InvariantCultureIgnoreCase);
+                //    }).ToArray();
 
-                    if (modelPath == null)
-                    {
-                        //check for variants
-                        string modelPathRelative = null;
-                        try
-                        {
-                            modelPathRelative = ReadRelatedModel(Path.Combine(subfolder, "renderconfig.ini"));
-                        }
-                        catch (ApplicationException e)
-                        {
-                            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, e.Message);
-                            continue;
-                        }
+                //    var texturesSize = Directory.GetFiles(subfolder, "*.dds")
+                //        .Sum(x => new FileInfo(x).Length)
+                //        .GetHumanReadableFileSize();
 
-                        if (modelPathRelative.Contains("../"))
-                        {
-                            modelPath = Path.GetFullPath(Path.Combine(subfolder, modelPathRelative));
-                            // todo: maybe select that as variant to avoid duplicates?
-                        }
-                        else
-                        {
-                            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, "Mod invalid - No model");
-                            continue;
-                        }
-                    }
-                    var vertices = ReadVertices(modelPath).ToString();
+                //    var modelPath = nmfFiles.Except(filesWithLod)
+                //        .FirstOrDefault(x => !x.EndsWith("joint.nmf") && !x.EndsWith("anim.nmf"));
 
-                    var appendSubmod = mod.Subfolders.Length > 1;
-                    var name = appendSubmod ? mod.Name + "\\" + new DirectoryInfo(Path.GetDirectoryName(subfolder + "\\")).Name : mod.Name;
-                    _csvBuilder.AddRow(mod.Id, name, filesWithLod.Count().ToString(), texturesSize, vertices, subfolder);
-                };
+                //    if (modelPath == null)
+                //    {
+                //        //check for variants
+                //        string modelPathRelative = null;
+                //        try
+                //        {
+                //            modelPathRelative = ReadRelatedModel(Path.Combine(subfolder, "renderconfig.ini"));
+                //        }
+                //        catch (ApplicationException e)
+                //        {
+                //            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, e.Message);
+                //            continue;
+                //        }
+
+                //        if (modelPathRelative.Contains("../"))
+                //        {
+                //            modelPath = Path.GetFullPath(Path.Combine(subfolder, modelPathRelative));
+                //            // todo: maybe select that as variant to avoid duplicates?
+                //        }
+                //        else
+                //        {
+                //            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, "Mod invalid - No model");
+                //            continue;
+                //        }
+                //    }
+                //    var vertices = ReadVertices(modelPath).ToString();
+
+                //    var appendSubmod = mod.Subfolders.Length > 1;
+                //    var name = appendSubmod ? mod.Name + "\\" + new DirectoryInfo(Path.GetDirectoryName(subfolder + "\\")).Name : mod.Name;
+                //    _csvBuilder.AddRow(mod.Id, name, filesWithLod.Count().ToString(), texturesSize, vertices, subfolder);
+                //};
             }
-
         }
 
         private void GetModProperties(Mod mod)

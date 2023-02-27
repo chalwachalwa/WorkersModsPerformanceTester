@@ -8,11 +8,13 @@ namespace WorkersModsPerformanceTester
 {
     internal class Model
     {
-        private string _renderconfigPath;
-        private string _nmfPath;
-
-        public int LODsCount { get; }
-        public int Vertices { get; }
+        virtual public string FolderPath { get; protected set; }
+        virtual public string Name { get; protected set; }
+        virtual public string NmfPath { get; protected set; }
+        virtual public string MaterialPath { get; protected set; }
+        virtual public int LODsCount { get; protected set; }
+        virtual public string TexturesSize { get; protected set; }
+        virtual public int Vertices { get; protected set; }
 
     }
 }

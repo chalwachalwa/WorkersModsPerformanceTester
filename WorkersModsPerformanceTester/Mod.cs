@@ -14,6 +14,7 @@ namespace WorkersModsPerformanceTester
 
         public Mod(string path)
         {
+            Models = new List<Model>();
             Folder = path;
             Id = Path.GetFileName(Path.GetDirectoryName(Folder));
             _workshopconfigPath = Path.Combine(path, "workshopconfig.ini");
@@ -27,6 +28,6 @@ namespace WorkersModsPerformanceTester
         public string[] Subfolders { get; }
         public string WorkshopconfigPath { get; }
         public string[] Warnings { get; set; }
-
+        public List<Model> Models { get; }
     }
 }
