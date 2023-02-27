@@ -24,6 +24,7 @@ namespace WorkersModsPerformanceTester
         public string Id { get; }
         public string Name { get; set; }
         public string AuthorId { get; set; }
+        public string AuthorName { get; set; }
         public string Type { get; set; }
         public string Folder { get; }
         public string[] Subfolders { get; }

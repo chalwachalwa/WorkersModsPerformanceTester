@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -63,7 +65,7 @@ namespace WorkersModsPerformanceTester
                 }
                 foreach (var model in mod.Models)
                 {
-                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount, model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
+                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount, model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
                 }
             }
         }
@@ -77,60 +79,21 @@ namespace WorkersModsPerformanceTester
                 mod.Type = modProperties["$ITEM_TYPE"];
                 mod.Name = modProperties["$ITEM_NAME"];
                 mod.AuthorId = modProperties["$OWNER_ID"];
+                
+                Task<string> task = Task.Run<string>(async () => await GetAuthorName(mod.AuthorId));
+                mod.AuthorName = task.Result;
+
             }
             catch (KeyNotFoundException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "", "","", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
+                _csvBuilder.AddRow(mod.Id, "", "", "", "","", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
                 throw e;
             }
             catch (ApplicationException e)
             {
-                _csvBuilder.AddRow(mod.Id, "","", "","", "", "", "", mod.Folder, e.Message);
+                _csvBuilder.AddRow(mod.Id, "","", "", "","", "", "", "", mod.Folder, e.Message);
                 throw e;
             }
-        }
-
-        private static int ReadVertices(string path)
-        {
-            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
-                using (var br = new BinaryReader(fs))
-                {
-                    // header
-                    var buffer = br.ReadBytes(20);
-                    var numMaterials = BitConverter.ToInt32(buffer, 8);
-                    var numNodes = BitConverter.ToInt32(buffer, 12);
-
-                    // materials
-                    var offset = numMaterials * 64;
-                    buffer = br.ReadBytes(offset);
-                    for (int i = 0; i < numNodes; i++)
-                    {
-                        // node type
-                        buffer = br.ReadBytes(4);
-                        var nodeType = BitConverter.ToInt32(buffer, 0);
-
-                        if (nodeType == 0)
-                        {
-                            buffer = br.ReadBytes(228);
-                            var numLods = BitConverter.ToInt32(buffer, 224);
-                            if (numLods != 1) throw new ApplicationException();
-                            buffer = br.ReadBytes(8);
-                            return BitConverter.ToInt32(buffer, 4);
-                        }
-                        else if (nodeType == 1)
-                        {
-                            buffer = br.ReadBytes(288);
-                        }
-                        else
-                        {
-                            throw new ApplicationException("Node type 2 unhandled");
-                        }
-                    }
-
-                }
-            }
-            throw new ApplicationException("Cannot read vertices");
         }
 
         private static Dictionary<string, string> GetScriptProperties(string path)
@@ -167,6 +130,70 @@ namespace WorkersModsPerformanceTester
                 throw new ApplicationException("Invalid mod - no workshopconfig.ini", e);
             }
             return results;
+        }
+
+        private async Task<string> GetAuthorName(string id)
+        {
+            string text, html, json, result = "-";
+            try
+            {
+                if (!File.Exists("cache.json"))
+                {
+                    File.Create("cache.json");
+                    Task.Delay(500).RunSynchronously();
+                }
+
+                
+
+                using (var sr = new StreamReader("cache.json"))
+                {
+                    text = sr.ReadToEnd();
+                }
+                Dictionary<string, string> users = null;
+                if (!string.IsNullOrEmpty(text))
+                {
+                    users = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                }
+                    
+                if (users == null)
+                {
+                    users = new Dictionary<string, string>();
+                }
+
+                var sucess = users.TryGetValue(id, out var name);
+                if (sucess)
+                {
+                    return name;
+                }
+
+                using (var httpClient = new HttpClient())
+                {
+                    using (HttpResponseMessage response = httpClient.GetAsync($"https://www.steamidfinder.com/lookup/{id}/").Result)
+                    {
+                        using (HttpContent content = response.Content)
+                        {
+                            html = content.ReadAsStringAsync().Result;
+                        }
+                    }
+
+                    var pattern = @"(?<=>name<\/th>\n\s*<td><code>)(.*)(?=<\/code><\/td)";
+                    var match = Regex.Match(html, pattern);
+                    result = match.Value;
+                    if (string.IsNullOrEmpty(result)) return "-";
+
+                    users.Add(id, result);
+                    json = JsonConvert.SerializeObject(users);
+                }
+                using (var sr = new StreamWriter("cache.json"))
+                {
+                    sr.Write(json);
+                }
+            }
+            catch(Exception e)
+            {
+                ;
+            }
+            return result;
         }
     }
 }

@@ -7,17 +7,12 @@ namespace WorkersModsPerformanceTester
 {
     internal class Program
     {
-        // map      - WORKSHOP_ITEMTYPE_LANDSCAPE
-        // vehicle  - WORKSHOP_ITEMTYPE_VEHICLE
-        // building - WORKSHOP_ITEMTYPE_BUILDING
-        
-
         static void Main(string[] args)
         {
             Console.WriteLine("Processing...");
 
             var csvBuilder = new CsvBuilder();
-            csvBuilder.SetUpColumns("Mod number", "AuthorId", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Score", "Path", "Warnings");
+            csvBuilder.SetUpColumns("Mod number", "AuthorId", "AuthorName", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Score", "Path", "Warnings");
 
             using (var progress = new ProgressBar())
             {
