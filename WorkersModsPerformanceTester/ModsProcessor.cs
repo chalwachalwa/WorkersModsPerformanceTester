@@ -30,35 +30,22 @@ namespace WorkersModsPerformanceTester
             foreach (var modFolder in modFolders)
             {
                 _progressBar.Report((double)progressBarIterator++ / modFolders.Length);
+                
+                var mod = new Mod(modFolder);
 
-                var modNumber = Path.GetFileName(Path.GetDirectoryName(modFolder));
-
-                string modType;
-                string modName;
                 try
                 {
-                    Dictionary<string, string> modProperties;
-                    modProperties = GetScriptProperties(Path.Combine(modFolder, "workshopconfig.ini"));
-                    modType = modProperties["$ITEM_TYPE"];
-                    modName = modProperties["$ITEM_NAME"];
+                    GetModProperties(mod);
                 }
-                catch (KeyNotFoundException e)
+                catch (Exception e)
                 {
-                    _csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, "Mod invalid - missing property in workshopconfig.ini");
-                    continue;
-                }
-                catch (ApplicationException e)
-                {
-                    _csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, e.Message);
                     continue;
                 }
                 
                 // Exclude mods that are not vechicles or buildings
-                if (!modTypes.Contains(modType)) continue; 
+                if (!modTypes.Contains(mod.Type)) continue; 
 
-                var subfolders = Directory.GetDirectories(modFolder, "*", SearchOption.AllDirectories);
-
-                foreach (var subfolder in subfolders)
+                foreach (var subfolder in mod.Subfolders)
                 {
                     // ignore empty subfolder or when models are nested
                     var files = Directory.GetFiles(subfolder);
@@ -69,7 +56,7 @@ namespace WorkersModsPerformanceTester
                         || subfolder.Contains("joint", StringComparison.InvariantCultureIgnoreCase)
                         || subfolder.Contains("resource", StringComparison.InvariantCultureIgnoreCase)) continue;
                     //todo: handle textures folders
-
+                    
                     var nmfFiles = Directory.GetFiles(subfolder, "*.nmf");
                     var filesWithLod = nmfFiles.Where(x =>
                     {
@@ -95,7 +82,7 @@ namespace WorkersModsPerformanceTester
                         }
                         catch (ApplicationException e)
                         {
-                            _csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, e.Message);
+                            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, e.Message);
                             continue;
                         }
 
@@ -106,18 +93,39 @@ namespace WorkersModsPerformanceTester
                         }
                         else
                         {
-                            _csvBuilder.AddRow(modNumber, "", "", "", "", modFolder, "Mod invalid - No model");
+                            _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, "Mod invalid - No model");
                             continue;
                         }
                     }
                     var vertices = ReadVertices(modelPath).ToString();
 
-                    var appendSubmod = subfolders.Length > 1;
-                    var name = appendSubmod ? modName + "\\" + new DirectoryInfo(Path.GetDirectoryName(subfolder + "\\")).Name : modName;
-                    _csvBuilder.AddRow(modNumber, name, filesWithLod.Count().ToString(), texturesSize, vertices, subfolder);
+                    var appendSubmod = mod.Subfolders.Length > 1;
+                    var name = appendSubmod ? mod.Name + "\\" + new DirectoryInfo(Path.GetDirectoryName(subfolder + "\\")).Name : mod.Name;
+                    _csvBuilder.AddRow(mod.Id, name, filesWithLod.Count().ToString(), texturesSize, vertices, subfolder);
                 };
             }
 
+        }
+
+        private void GetModProperties(Mod mod)
+        {
+            try
+            {
+                Dictionary<string, string> modProperties;
+                modProperties = GetScriptProperties(Path.Combine(mod.Folder, "workshopconfig.ini"));
+                mod.Type = modProperties["$ITEM_TYPE"];
+                mod.Name = modProperties["$ITEM_NAME"];
+            }
+            catch (KeyNotFoundException e)
+            {
+                _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
+                throw e;
+            }
+            catch (ApplicationException e)
+            {
+                _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, e.Message);
+                throw e;
+            }
         }
 
         private static int ReadVertices(string path)
