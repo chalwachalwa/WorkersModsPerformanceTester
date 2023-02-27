@@ -36,7 +36,6 @@ namespace WorkersModsPerformanceTester
             foreach (var modFolder in modFolders)
             {
                 _progressBar.Report((double)progressBarIterator++ / modFolders.Length);
-                
                 var mod = new Mod(modFolder + "//");
 
                 try
@@ -53,13 +52,13 @@ namespace WorkersModsPerformanceTester
 
                 if (mod.Type == "WORKSHOP_ITEMTYPE_BUILDING")
                 {
-                    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "renderconfig.ini")).Select(x => new Building(x)).ToArray();
+                    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "renderconfig.ini")).Select(x => new Building(x, mod.Type)).ToArray();
                     mod.Models.AddRange(buildings);
                 }
                 else if (mod.Type == "WORKSHOP_ITEMTYPE_VEHICLE")
                 {
                     var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "script.ini"))
-                        .Select(x => new Vehicle(x)).ToArray();
+                        .Select(x => new Vehicle(x, mod.Type)).ToArray();
                     mod.Models.AddRange(buildings);
                 }
                 foreach (var model in mod.Models)

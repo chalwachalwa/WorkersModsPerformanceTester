@@ -10,12 +10,13 @@ namespace WorkersModsPerformanceTester
     {
         virtual public string FolderPath { get; protected set; }
         virtual public string Name { get; protected set; }
+        virtual public string Type { get; protected set; }
         virtual public string NmfPath { get; protected set; }
         virtual public string MaterialPath { get; protected set; }
         virtual public string LODsCount { get; protected set; }
         virtual public string TexturesSize { get; protected set; }
         virtual public string Faces { get; protected set; }
-
+        virtual public string Score { get { return String.Format("{0:0.000}", CalculateScore());  } }
         virtual public string[] PropertiesToRead { get; protected set; }
 
         protected virtual Dictionary<string, string> ReadRelatedConfig(string path)
@@ -219,6 +220,45 @@ namespace WorkersModsPerformanceTester
                 }
             }
             return faces;
+        }
+
+        private double CalculateScore()
+        {
+            const double lodCoeficient = 40;
+            const double facesCoeficient = 40;
+            const double texturesCoeficient = 20;
+
+            const double vehiclesMeanFaces = 6242.7128;
+            const double vehiclesStandardDeviationFaces = 10107.5839;
+            const double vehiclesXOffsetFaces = 34188.0;
+
+            const double vehiclesMeanTextures = 0.9852;
+            const double vehiclesStandardDeviationTextures = 1.1122;
+            const double vehiclesXOffsetTextures = 3.5;
+
+            const double buildingsMeanFaces = 2964.829;
+            const double buildingsStandardDeviationFaces = 2594.9566;
+            const double buildingsXOffsetFaces = 7415;
+
+            const double buildingsMeanTextures = 0.865;
+            const double buildingsStandardDeviationTextures = 0.641;
+            const double buildingsXOffsetTextures = 1.7;
+
+            double lodValue = (double)int.Parse(LODsCount) / 2;
+            double facesValue = 0.0;
+            double texturesValue = 0.0;
+            if (Type == "WORKSHOP_ITEMTYPE_VEHICLE")
+            {
+                facesValue = 0.5 - 0.5 * Math.Tanh(((double)int.Parse(Faces) - vehiclesXOffsetFaces - vehiclesMeanFaces) / (2 * vehiclesStandardDeviationFaces));
+                texturesValue = 0.5 - 0.5 * Math.Tanh(((double)double.Parse(TexturesSize) - vehiclesXOffsetTextures - vehiclesMeanTextures) / (2 * vehiclesStandardDeviationTextures));
+            }
+            else if (Type == "WORKSHOP_ITEMTYPE_BUILDING")
+            {
+                facesValue = 0.5 - 0.5 * Math.Tanh(((double)int.Parse(Faces) - buildingsXOffsetFaces - buildingsMeanFaces) / (2 * buildingsStandardDeviationFaces));
+                texturesValue = 0.5 - 0.5 * Math.Tanh(((double)double.Parse(Faces) - buildingsXOffsetTextures - buildingsMeanTextures) / (2 * buildingsStandardDeviationTextures));
+            }
+
+            return lodCoeficient * lodValue + facesCoeficient * facesValue + texturesCoeficient * texturesValue;
         }
     }
 }

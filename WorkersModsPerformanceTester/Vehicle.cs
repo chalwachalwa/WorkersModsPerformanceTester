@@ -11,7 +11,7 @@ namespace WorkersModsPerformanceTester
         private readonly string[] _propertiesToRead = new[] { "$JOINT" };
         private string _sciptIniPath;
 
-        public Vehicle(string path)
+        public Vehicle(string path, string type)
         {
             PropertiesToRead = _propertiesToRead;
             _sciptIniPath = path;
@@ -19,6 +19,7 @@ namespace WorkersModsPerformanceTester
             var folder = Directory.GetParent(path);
             FolderPath = folder.FullName;
             Name = folder.Name;
+            Type = type;
 
             var scriptProperties = ReadRelatedConfig(_sciptIniPath); // script ini!
             var jointExist = scriptProperties.TryGetValue("$JOINT", out var jointPath);

@@ -12,7 +12,7 @@ namespace WorkersModsPerformanceTester
         private readonly string[] _propertiesToRead = new[] { "MODEL", "MATERIAL", "MODEL_LOD", "MODEL_LOD2" };
         private string _renderconfigPath;
 
-        public Building(string path)
+        public Building(string path, string type)
         {
             PropertiesToRead = _propertiesToRead;
 
@@ -21,6 +21,7 @@ namespace WorkersModsPerformanceTester
             var folder = Directory.GetParent(path);
             FolderPath = folder.FullName;
             Name = folder.Name;
+            Type = type;
             
             var renderProperties = ReadRelatedConfig(_renderconfigPath);
             NmfPath = Path.Combine(FolderPath, renderProperties["MODEL"]);
