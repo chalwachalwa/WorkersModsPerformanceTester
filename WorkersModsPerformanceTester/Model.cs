@@ -12,9 +12,9 @@ namespace WorkersModsPerformanceTester
         virtual public string Name { get; protected set; }
         virtual public string NmfPath { get; protected set; }
         virtual public string MaterialPath { get; protected set; }
-        virtual public int LODsCount { get; protected set; }
+        virtual public string LODsCount { get; protected set; }
         virtual public string TexturesSize { get; protected set; }
-        virtual public int Vertices { get; protected set; }
+        virtual public string Vertices { get; protected set; }
 
     }
 }

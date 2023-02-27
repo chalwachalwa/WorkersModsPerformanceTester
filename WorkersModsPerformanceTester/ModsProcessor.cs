@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace WorkersModsPerformanceTester
 {
@@ -55,11 +56,16 @@ namespace WorkersModsPerformanceTester
                     var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "renderconfig.ini")).Select(x => new Building(x)).ToArray();
                     mod.Models.AddRange(buildings);
                 }
-                else if (mod.Type == "WORKSHOP_ITEMTYPE_VEHICLE")
+                //else if (mod.Type == "WORKSHOP_ITEMTYPE_VEHICLE")
+                //{
+                //    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "script.ini"))
+                //        .Select(x => new Vehicle(x)).ToArray();
+                //    mod.Models.AddRange(buildings);
+                //}
+
+                foreach(var model in mod.Models)
                 {
-                    var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "script.ini"))
-                        .Select(x => new Vehicle(x)).ToArray();
-                    mod.Models.AddRange(buildings);
+                    _csvBuilder.AddRow(mod.Id, mod.Type,model.Name, model.LODsCount, model.TexturesSize, model.Vertices, model.FolderPath);
                 }
 
                 //foreach (var subfolder in mod.Subfolders)
@@ -134,12 +140,12 @@ namespace WorkersModsPerformanceTester
             }
             catch (KeyNotFoundException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
+                _csvBuilder.AddRow(mod.Id, "", "","", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
                 throw e;
             }
             catch (ApplicationException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "", "", "", mod.Folder, e.Message);
+                _csvBuilder.AddRow(mod.Id, "", "","", "", "", mod.Folder, e.Message);
                 throw e;
             }
         }
@@ -187,8 +193,6 @@ namespace WorkersModsPerformanceTester
             throw new ApplicationException("Cannot read vertices");
         }
 
-        //private static readonly string[] ScriptProperties = { "$ITEM_TYPE", "" };
-
         private static Dictionary<string, string> GetScriptProperties(string path)
         {
             var results = new Dictionary<string, string>();
@@ -223,39 +227,6 @@ namespace WorkersModsPerformanceTester
                 throw new ApplicationException("Invalid mod - no workshopconfig.ini", e);
             }
             return results;
-        }
-
-        private static string ReadRelatedModel(string path)
-        {
-            try
-            {
-                using (var fileReader = new StreamReader(path))
-                {
-                    while (!fileReader.EndOfStream)
-                    {
-                        string line = fileReader.ReadLine().Trim();
-                        var words = line.Split(" ");
-                        string propertyName;
-                        if (words.Length > 1)
-                        {
-                            propertyName = words.First();
-                            if (propertyName == "MODEL")
-                            {
-                                return words.Last();
-                            }
-                            else
-                            {
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (FileNotFoundException e)
-            {
-                throw new ApplicationException("Invalid mod - no renderconfig.ini", e);
-            }
-            throw new ApplicationException("Invalid mod - no model info in renderconfig.ini");
         }
     }
 }

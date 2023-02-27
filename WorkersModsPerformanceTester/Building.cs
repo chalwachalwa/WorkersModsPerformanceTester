@@ -26,8 +26,8 @@ namespace WorkersModsPerformanceTester
             var texturesPaths = GetTexturesRelativePaths(MaterialPath);
             TexturesSize = CountTexturesSize(texturesPaths);
 
-            LODsCount = renderProperties.Count(x => x.Key.Contains("LOD", StringComparison.InvariantCultureIgnoreCase));
-            Vertices = ReadVertices(NmfPath);
+            LODsCount = renderProperties.Count(x => x.Key.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToString();
+            Vertices = ReadVertices(NmfPath).ToString();
         }
 
         private readonly string[] propertiesToRead = new[] { "MODEL", "MATERIAL", "MODEL_LOD", "MODEL_LOD2" };
@@ -64,14 +64,32 @@ namespace WorkersModsPerformanceTester
 
         private string CountTexturesSize(Dictionary<string, string> texturesPaths)
         {
-            var filteredTextures = texturesPaths.Where(x => x.Key == "$TEXTURE")
-                .Where(x => x.Value != ("blankspecular.dds") && x.Value != ("blankbump.dds"));
-
-            return filteredTextures.Select(x => Path.Combine(MaterialPath, x.Value))
-                        .Sum(x => new FileInfo(x).Length)
-                        .GetHumanReadableFileSize();
+            var filteredTextures = texturesPaths.Where(x => x.Key.Contains("$TEXTURE"))
+                .Where(x => !x.Value.Contains("blankspecular.dds") && !x.Value.Contains("blankbump.dds"))
+                .Select(x => x.Value)
+                .Distinct()
+                .ToArray();
+            string a;
+            
+            var pathsToTextures = filteredTextures.Select(x => Path.Combine(Directory.GetParent(MaterialPath).FullName, x));
+            long sum = 0;
+            foreach (var path in pathsToTextures)
+            {
+                try
+                {
+                    sum += new FileInfo(path).Length;
+                }
+                catch(FileNotFoundException e)
+                {
+                    ; // handle case that someone reference implicitly \media_soviet\buildings
+                      // program treats all paths as relative to .mtl path
+                      // todo: should I count it?
+                }
+            }
+            return sum.GetHumanReadableFileSize();
         }
 
+        private readonly string[] texturesPropertiesToRead = new[] { "$TEXTURE_MTL", "$TEXTURE" };
         private Dictionary<string, string> GetTexturesRelativePaths(string path)
         {
             var results = new Dictionary<string, string>();
@@ -100,9 +118,17 @@ namespace WorkersModsPerformanceTester
                         if(propertyName == "$SUBMATERIAL")
                         {
                             currentSubmaterial = words.Last();
+                            continue;
                         }
-
-                        results.TryAdd(currentSubmaterial + "_" + propertyName, line.Replace("\"", "").Replace(propertyName, "").Trim());
+                        if (texturesPropertiesToRead.Contains(propertyName)) 
+                        {
+                            var textureNumber = "";
+                            if(words.Length == 3)
+                            {
+                                textureNumber = words[1];
+                            }
+                            results.TryAdd($"{currentSubmaterial}_{propertyName}{textureNumber}", words.Last());
+                        }
                     }
                 }
             }
