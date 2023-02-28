@@ -1,6 +1,7 @@
 # WorkersModsPerformanceTester
 
 Hello this is comunity project, join our modders discord: https://discord.gg/gaREV5AU
+Reporting issues https://github.com/chalwachalwa/WorkersModsPerformanceTester/issues
 
 How to use: 
   - Select latest release https://github.com/chalwachalwa/WorkersModsPerformanceTester/tags
