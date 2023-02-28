@@ -30,6 +30,7 @@ To process without scraping users from external site use:
 --nousers
 
 # How to build from source code:
+- Download source code on latest release page
 - Download and install .NET SDK (at least 6.0) - https://dotnet.microsoft.com/en-us/download
 - Select working directory with .sln file in cmd.exe 
 - type "dotnet build"
