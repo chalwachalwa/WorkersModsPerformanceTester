@@ -17,7 +17,13 @@ Example  https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.8
   - Select latest release https://github.com/chalwachalwa/WorkersModsPerformanceTester/tags 
   - Download <br />
   - Unzip <br />
-  - Run .exe <br />
+  - Shift + Right Mouse Button on .exe file -> copy as path
+  - Click (windows) + R
+  - Type: cmd.exe
+  - Paste + (optional: add arguments)
+  - Click enter
+  - If you get information that .NET 6.0 runtime is required please download, install and retry: https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.14-windows-x64-installer
+  - If you get any other prompt with unexpected error please copy and send it to me
   - Open .csv file with spreadsheet like Libre Office, MS Excel or Google docs
   - Order records by selected column 
 
