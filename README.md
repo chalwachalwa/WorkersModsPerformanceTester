@@ -3,7 +3,7 @@
 Hello this is comunity project, join our modders discord: https://discord.gg/gaREV5AU
 
 How to use: 
-  - Select latest release ===============>>>>>
+  - Select latest release https://github.com/chalwachalwa/WorkersModsPerformanceTester/tags
   - Download 
   - Unzip
   - Run .exe
