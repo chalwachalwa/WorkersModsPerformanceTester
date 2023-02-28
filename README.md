@@ -36,5 +36,6 @@ To process without scraping users from external site use:
 - type "dotnet build"
 
 # License
-MIT
-Feel free to fork, modify, distribute
+MIT <br />
+Feel free to fork, modify, distribute. <br />
+No guarantee. 
