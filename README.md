@@ -12,7 +12,7 @@ Faces and textures score based on logistic curves adjusted on sampling 80% of 25
 Example  https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.865-1.7%29%2F%282*0.641%29%29
 
 
-How to use: 
+# How to use: 
   - Select latest release https://github.com/chalwachalwa/WorkersModsPerformanceTester/tags
   - Download 
   - Unzip
@@ -28,7 +28,7 @@ For custom path use:
 To process without scraping users from external site use:
 --nousers
 
-How to build from source code:
+# How to build from source code:
 - Download and install .NET SDK (at least 6.0) - https://dotnet.microsoft.com/en-us/download
 - Select working directory with .sln file in cmd.exe 
 - type "dotnet build"
