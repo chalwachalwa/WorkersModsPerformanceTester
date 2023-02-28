@@ -69,7 +69,7 @@ namespace WorkersModsPerformanceTester
                 }
                 foreach (var model in mod.Models)
                 {
-                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount.ToString(), model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
+                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount.ToString(), model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath, $"https://steamcommunity.com/sharedfiles/filedetails/?id={mod.Id}");
                 }
             }
         }
@@ -92,12 +92,12 @@ namespace WorkersModsPerformanceTester
             }
             catch (KeyNotFoundException e)
             {
-                _csvBuilder.AddRow(mod.Id, "", "", "", "","", "", "", "", mod.Folder, "Mod invalid - missing property in workshopconfig.ini");
+                _csvBuilder.AddRow(mod.Id, "", "", "", "","", "", "", "", mod.Folder,$"https://steamcommunity.com/sharedfiles/filedetails/?id={mod.Id}", "Mod invalid - missing property in workshopconfig.ini");
                 throw e;
             }
             catch (ApplicationException e)
             {
-                _csvBuilder.AddRow(mod.Id, "","", "", "","", "", "", "", mod.Folder, e.Message);
+                _csvBuilder.AddRow(mod.Id, "","", "", "","", "", "", "", mod.Folder, $"https://steamcommunity.com/sharedfiles/filedetails/?id={mod.Id}", e.Message);
                 throw e;
             }
         }

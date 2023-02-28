@@ -10,6 +10,7 @@ namespace WorkersModsPerformanceTester
         static void Main(string[] args)
         {
             string workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
+            string outputPath = "mods.csv";
             bool scrapUsers = true;
             try
             {
@@ -19,6 +20,11 @@ namespace WorkersModsPerformanceTester
                     {
                         i++;
                         workshopPath = args[i];
+                    }
+                    else if (args[i] == "--output")
+                    {
+                        i++;
+                        outputPath = args[i];
                     }
                     else if (args[i] == "--nousers")
                     {
@@ -34,7 +40,7 @@ namespace WorkersModsPerformanceTester
             Console.WriteLine("Processing...");
 
             var csvBuilder = new CsvBuilder();
-            csvBuilder.SetUpColumns("Mod number", "AuthorId", "AuthorName", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Score", "Path", "Warnings");
+            csvBuilder.SetUpColumns("Mod number", "AuthorId", "AuthorName", "Mod type","Mod name\\submod", "Lod files", "Textures size[MB]", "Faces", "Score", "Path", "Workshop URL", "Warnings");
 
             using (var progress = new ProgressBar())
             {
@@ -43,7 +49,7 @@ namespace WorkersModsPerformanceTester
             }
             try
             {
-                File.WriteAllText("result4.csv", csvBuilder.ToString());
+                File.WriteAllText(outputPath, csvBuilder.ToString());
             }
             catch (IOException e)
             {
