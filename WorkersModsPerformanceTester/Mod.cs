@@ -31,10 +31,6 @@ namespace WorkersModsPerformanceTester
         public string WorkshopconfigPath { get; }
         public string[] Warnings { get; set; }
         public List<Model> Models { get; }
-
-
-        // example of logistics curve
-        // https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.985297-3.5%29%2F%282*1.1122%29%29
         
     }
 }

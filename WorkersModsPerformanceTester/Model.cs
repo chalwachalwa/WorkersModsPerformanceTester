@@ -222,6 +222,8 @@ namespace WorkersModsPerformanceTester
             return faces;
         }
 
+        // example of logistics curve
+        //https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.865-1.7%29%2F%282*0.641%29%29
         private double CalculateScore()
         {
             const double lodCoeficient = 40;

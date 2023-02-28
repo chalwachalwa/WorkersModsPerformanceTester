@@ -21,17 +21,20 @@ namespace WorkersModsPerformanceTester
 
         private readonly CsvBuilder _csvBuilder;
         private readonly ProgressBar _progressBar;
+        private readonly string _workshopPath;
+        private readonly bool _scrapUsers;
 
-        public ModsProcessor(CsvBuilder csvBuilder, ProgressBar progressBar)
+        public ModsProcessor(CsvBuilder csvBuilder, ProgressBar progressBar, string workshopPath, bool scrapUsers)
         {
             _csvBuilder = csvBuilder;
             _progressBar = progressBar;
+            _workshopPath = workshopPath;
+            _scrapUsers = scrapUsers;
         }
 
         public void Process()
         {
-            var workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
-            var modFolders = Directory.GetDirectories(workshopPath);
+            var modFolders = Directory.GetDirectories(_workshopPath);
 
             int progressBarIterator = 0;
 
@@ -79,10 +82,12 @@ namespace WorkersModsPerformanceTester
                 mod.Type = modProperties["$ITEM_TYPE"];
                 mod.Name = modProperties["$ITEM_NAME"];
                 mod.AuthorId = modProperties["$OWNER_ID"];
-                
-                Task<string> task = Task.Run<string>(async () => await GetAuthorName(mod.AuthorId));
-                mod.AuthorName = task.Result;
 
+                if (_scrapUsers)
+                {
+                    Task<string> task = Task.Run<string>(async () => await GetAuthorName(mod.AuthorId));
+                    mod.AuthorName = task.Result;
+                }
             }
             catch (KeyNotFoundException e)
             {
