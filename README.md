@@ -7,6 +7,8 @@ How to use:
   - Download 
   - Unzip
   - Run .exe
+  - Open .csv file with spreadsheet like Libre Office, MS Excel or Google docs
+  - Order records by selected column 
 
 To run console parameters use cmd.exe or open windows right mouse button menu on .exe file, go to properties and set arguments in file name textbox.
 
