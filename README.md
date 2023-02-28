@@ -21,7 +21,7 @@ Example  https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.8
   - Open .csv file with spreadsheet like Libre Office, MS Excel or Google docs
   - Order records by selected column 
 
-To run console parameters use cmd.exe or open windows right mouse button menu on .exe file, go to properties and set arguments in file name textbox.
+To run console parameters use cmd.exe or follow this tutorial: https://www.digitalcitizen.life/shortcut-arguments-parameters-windows/
 
 For custom mods path use:
 --path "YOUR_CUSTOM_PATH\Steam\steamapps\workshop\content\784150"
