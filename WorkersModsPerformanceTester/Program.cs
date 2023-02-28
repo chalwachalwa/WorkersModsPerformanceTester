@@ -9,7 +9,7 @@ namespace WorkersModsPerformanceTester
     {
         static void Main(string[] args)
         {
-            string workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
+            string workshopPath = @"C:\Program Files (x86)\Steam\steamapps\workshop\content\784150";
             string outputPath = "mods.csv";
             bool scrapUsers = true;
             try
