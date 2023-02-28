@@ -34,3 +34,7 @@ To process without scraping users from external site use:
 - Download and install .NET SDK (at least 6.0) - https://dotnet.microsoft.com/en-us/download
 - Select working directory with .sln file in cmd.exe 
 - type "dotnet build"
+
+# License
+MIT
+Feel free to fork, modify, distribute
