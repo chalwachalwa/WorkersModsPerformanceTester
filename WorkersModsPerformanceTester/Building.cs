@@ -30,7 +30,7 @@ namespace WorkersModsPerformanceTester
             var texturesPaths = GetTexturesRelativePaths(MaterialPath);
             TexturesSize = CountTexturesSize(texturesPaths);
 
-            LODsCount = renderProperties.Count(x => x.Key.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToString();
+            LODsCount = renderProperties.Count(x => x.Key.Contains("LOD", StringComparison.InvariantCultureIgnoreCase));
             Faces = ReadFacets(NmfPath);
         } 
     }

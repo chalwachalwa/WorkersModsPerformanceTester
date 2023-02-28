@@ -13,7 +13,7 @@ namespace WorkersModsPerformanceTester
         virtual public string Type { get; protected set; }
         virtual public string NmfPath { get; protected set; }
         virtual public string MaterialPath { get; protected set; }
-        virtual public string LODsCount { get; protected set; }
+        virtual public int LODsCount { get; protected set; }
         virtual public long TexturesSize { get; protected set; }
         virtual public int Faces { get; protected set; }
         virtual public string Score { get { return String.Format("{0:0.000}", CalculateScore());  } }
@@ -246,7 +246,7 @@ namespace WorkersModsPerformanceTester
             const double buildingsStandardDeviationTextures = 0.641;
             const double buildingsXOffsetTextures = 1.7;
 
-            double lodValue = (double)int.Parse(LODsCount) / 2;
+            double lodValue = (double)LODsCount / 2;
             double facesValue = 0.0;
             double texturesValue = 0.0;
             if (Type == "WORKSHOP_ITEMTYPE_VEHICLE")

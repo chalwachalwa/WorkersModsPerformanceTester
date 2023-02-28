@@ -9,27 +9,27 @@ namespace WorkersModsPerformanceTester
     {
         static void Main(string[] args)
         {
-            var arguments = args.Select((value, index) => new { value, index })
-                    .GroupBy(x => x.index / 2, x => x.value);
-
             string workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
             bool scrapUsers = true;
-            foreach (var argument in arguments)
+            try
             {
-                var a = argument.Select(x => x).ToArray();
-                if (a[0] == "--path")
+                for (int i = 0; i < args.Length; i++)
                 {
-                    workshopPath = a[1];
+                    if (args[i] == "--path")
+                    {
+                        i++;
+                        workshopPath = args[i];
+                    }
+                    else if (args[i] == "--nousers")
+                    {
+                        scrapUsers = false;
+                    }
                 }
-                else if (a[0] == "--nousers")
-                {
-                    scrapUsers = false;
-                }
-                else
-                {
-                    workshopPath = "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\784150";
-                }
+            }catch(IndexOutOfRangeException e)
+            {
+                Console.WriteLine("Invalid arguments");
             }
+            
 
             Console.WriteLine("Processing...");
 

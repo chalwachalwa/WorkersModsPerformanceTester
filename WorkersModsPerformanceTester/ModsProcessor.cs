@@ -18,6 +18,7 @@ namespace WorkersModsPerformanceTester
         // WORKSHOP_ITEMTYPE_VEHICLESKIN
         // WORKSHOP_ITEMTYPE_BUILDINGSKIN
         private readonly string[] _modTypesAllowedToProcess = new[] { "WORKSHOP_ITEMTYPE_BUILDING", "WORKSHOP_ITEMTYPE_VEHICLE" };
+        private Dictionary<string, string> _usersMemoryCache;
 
         private readonly CsvBuilder _csvBuilder;
         private readonly ProgressBar _progressBar;
@@ -68,7 +69,7 @@ namespace WorkersModsPerformanceTester
                 }
                 foreach (var model in mod.Models)
                 {
-                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount, model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
+                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount.ToString(), model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath);
                 }
             }
         }
@@ -147,22 +148,26 @@ namespace WorkersModsPerformanceTester
                     File.Create("cache.json");
                     Task.Delay(500).RunSynchronously();
                 }
-
-                
-
-                using (var sr = new StreamReader("cache.json"))
-                {
-                    text = sr.ReadToEnd();
-                }
                 Dictionary<string, string> users = null;
-                if (!string.IsNullOrEmpty(text))
+                if (_usersMemoryCache == null)
                 {
-                    users = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                    using (var sr = new StreamReader("cache.json"))
+                    {
+                        text = sr.ReadToEnd();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            users = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                            _usersMemoryCache = users;
+                        }
+                        else
+                        {
+                            users = new Dictionary<string, string>();
+                        }
+                    }
                 }
-                    
-                if (users == null)
+                else
                 {
-                    users = new Dictionary<string, string>();
+                    users = _usersMemoryCache;
                 }
 
                 var sucess = users.TryGetValue(id, out var name);
@@ -186,7 +191,7 @@ namespace WorkersModsPerformanceTester
                     result = match.Value;
                     if (string.IsNullOrEmpty(result)) return "-";
 
-                    users.Add(id, result);
+                    users.TryAdd(id, result);
                     json = JsonConvert.SerializeObject(users);
                 }
                 using (var sr = new StreamWriter("cache.json"))
