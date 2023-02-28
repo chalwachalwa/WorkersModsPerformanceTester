@@ -23,8 +23,11 @@ Example  https://www.wolframalpha.com/input?i=F%28x%29%3D0.5-0.5*tanh%28%28x-0.8
 
 To run console parameters use cmd.exe or open windows right mouse button menu on .exe file, go to properties and set arguments in file name textbox.
 
-For custom path use:
+For custom mods path use:
 --path "YOUR_CUSTOM_PATH\Steam\steamapps\workshop\content\784150"
+
+For custom output file path:
+--output "YOUR_CUSTOM_FILE.csv"
 
 To process without scraping users from external site use:
 --nousers
