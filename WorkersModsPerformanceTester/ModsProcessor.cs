@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using WorkersModsPerformanceTester.Utilities;
 
 namespace WorkersModsPerformanceTester
 {
@@ -24,18 +25,28 @@ namespace WorkersModsPerformanceTester
         private readonly ProgressBar _progressBar;
         private readonly string _workshopPath;
         private readonly bool _scrapUsers;
+        private readonly Logger _logger;
 
-        public ModsProcessor(CsvBuilder csvBuilder, ProgressBar progressBar, string workshopPath, bool scrapUsers)
+        public ModsProcessor(CsvBuilder csvBuilder, ProgressBar progressBar)
         {
             _csvBuilder = csvBuilder;
             _progressBar = progressBar;
-            _workshopPath = workshopPath;
-            _scrapUsers = scrapUsers;
+            _workshopPath = Program.Settings.WorkshopPath;
+            _scrapUsers = Program.Settings.ScrapUsers;
+            _logger = Program.Logger;
         }
 
         public void Process()
         {
-            var modFolders = Directory.GetDirectories(_workshopPath);
+            string[] modFolders = { };
+            try
+            {
+                modFolders = Directory.GetDirectories(_workshopPath);
+            }
+            catch(DirectoryNotFoundException e)
+            {
+                _logger.Write(Level.Error, e.ToString());
+            }
 
             int progressBarIterator = 0;
 
@@ -51,11 +62,25 @@ namespace WorkersModsPerformanceTester
                 catch (Exception e)
                 {
                     continue;
+                    _logger.Write(Level.Warning, e.ToString());
                 }
                 
                 // Exclude mods that are not vechicles or buildings
                 if (!_modTypesAllowedToProcess.Contains(mod.Type)) continue;
+                
+                ProcessModModels(mod);
 
+                foreach (var model in mod.Models)
+                {
+                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount.ToString(), model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath, $"https://steamcommunity.com/sharedfiles/filedetails/?id={mod.Id}");
+                }
+            }
+        }
+
+        private void ProcessModModels(Mod mod)
+        {
+            try
+            {
                 if (mod.Type == "WORKSHOP_ITEMTYPE_BUILDING")
                 {
                     var buildings = mod.Subfolders.SelectMany(x => Directory.GetFiles(x, "renderconfig.ini")).Select(x => new Building(x, mod.Type)).ToArray();
@@ -67,10 +92,10 @@ namespace WorkersModsPerformanceTester
                         .Select(x => new Vehicle(x, mod.Type)).ToArray();
                     mod.Models.AddRange(buildings);
                 }
-                foreach (var model in mod.Models)
-                {
-                    _csvBuilder.AddRow(mod.Id, mod.AuthorId, mod.AuthorName, mod.Type,$"{mod.Name}/{model.Name}", model.LODsCount.ToString(), model.TexturesSize.GetHumanReadableFileSize() , model.Faces.ToString(), model.Score, model.FolderPath, $"https://steamcommunity.com/sharedfiles/filedetails/?id={mod.Id}");
-                }
+            }
+            catch(Exception e)
+            {
+                _logger.Write(Level.Error, "Unhandled mod processing error: " + e.ToString());
             }
         }
 
