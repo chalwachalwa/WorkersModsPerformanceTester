@@ -16,7 +16,7 @@ namespace WorkersModsPerformanceTester
         virtual public int LODsCount { get; protected set; }
         virtual public long TexturesSize { get; protected set; }
         virtual public int Faces { get; protected set; }
-        virtual public string Score { get { return String.Format("{0:0.000}", CalculateScore());  } }
+        virtual public string Score { get { return String.Format("{0:0.000}", CalculateScore()); } }
         virtual public string[] PropertiesToRead { get; protected set; }
 
         protected virtual Dictionary<string, string> ReadRelatedConfig(string path)
@@ -37,6 +37,7 @@ namespace WorkersModsPerformanceTester
                             if (PropertiesToRead.Contains(propertyName))
                             {
                                 result.Add(propertyName, words.First(x => x.Contains(".")));
+                                //todo: handle more than one MODEL
                             }
                         }
                     }
@@ -44,7 +45,10 @@ namespace WorkersModsPerformanceTester
             }
             catch (FileNotFoundException e)
             {
-                throw new ApplicationException("Invalid mod - no renderconfig.ini", e);
+                var exception =  new ApplicationException("Invalid mod - no renderconfig.ini", e);
+                exception.Data.Add("folder", FolderPath);
+                exception.Data.Add("name", Name);
+                throw exception;
             }
             return result;
         }
@@ -120,12 +124,15 @@ namespace WorkersModsPerformanceTester
             }
             catch (FileNotFoundException e)
             {
-                throw new ApplicationException("Invalid mod - no workshopconfig.ini", e);
+                var exception =  new ApplicationException("Invalid mod - no workshopconfig.ini", e);
+                exception.Data.Add("folder", FolderPath);
+                exception.Data.Add("name", Name);
+                throw exception;
             }
             return results;
         }
 
-        protected static int ReadFacets(string path)
+        protected int ReadFacets(string path)
         {
             int  debugMax = 0;
             var faces = 0;
@@ -210,11 +217,17 @@ namespace WorkersModsPerformanceTester
                         }
                         else if(nodeType == 2)
                         {
-                            throw new NotImplementedException("Node type 2 unhandled");
+                            var exception =  new NotImplementedException("Node type 2 unhandled");
+                            exception.Data.Add("folder", FolderPath);
+                            exception.Data.Add("name", Name);
+                            throw exception;
                         }
                         else
                         {
-                            throw new ApplicationException("Node type unknown");
+                            var exception = new ApplicationException("Node type unknown");
+                            exception.Data.Add("folder", FolderPath);
+                            exception.Data.Add("name", Name);
+                            throw exception;
                         }
                     }
                 }

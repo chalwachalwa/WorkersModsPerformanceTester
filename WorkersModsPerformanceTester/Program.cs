@@ -2,40 +2,25 @@
 using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
+using WorkersModsPerformanceTester.Utilities;
+using Unity;
+using System.ComponentModel;
 
 namespace WorkersModsPerformanceTester
 {
     internal class Program
     {
+        public static Settings Settings = new Settings()
+        {
+            WorkshopPath = @"C:\Program Files (x86)\Steam\steamapps\workshop\content\784150",
+            OutputPath = "mods.csv",
+            ScrapUsers = true
+        };
+        public static Logger Logger = new Logger();
+
         static void Main(string[] args)
         {
-            string workshopPath = @"C:\Program Files (x86)\Steam\steamapps\workshop\content\784150";
-            string outputPath = "mods.csv";
-            bool scrapUsers = true;
-            try
-            {
-                for (int i = 0; i < args.Length; i++)
-                {
-                    if (args[i] == "--path")
-                    {
-                        i++;
-                        workshopPath = args[i];
-                    }
-                    else if (args[i] == "--output")
-                    {
-                        i++;
-                        outputPath = args[i];
-                    }
-                    else if (args[i] == "--nousers")
-                    {
-                        scrapUsers = false;
-                    }
-                }
-            }catch(IndexOutOfRangeException e)
-            {
-                Console.WriteLine("Invalid arguments");
-            }
-            
+            ParseArguments(args);
 
             Console.WriteLine("Processing...");
 
@@ -44,16 +29,44 @@ namespace WorkersModsPerformanceTester
 
             using (var progress = new ProgressBar())
             {
-                var modProcessor = new ModsProcessor(csvBuilder, progress, workshopPath, scrapUsers);
+                var modProcessor = new ModsProcessor(csvBuilder, progress);
                 modProcessor.Process();
             }
             try
             {
-                File.WriteAllText(outputPath, csvBuilder.ToString());
+                File.WriteAllText(Settings.OutputPath, csvBuilder.ToString());
             }
             catch (IOException e)
             {
                 Console.WriteLine(e);
+            }
+        }
+
+        private static void ParseArguments(string[] args)
+        {
+            try
+            {
+                for (int i = 0; i < args.Length; i++)
+                {
+                    if (args[i] == "--path")
+                    {
+                        i++;
+                        Settings.WorkshopPath = args[i];
+                    }
+                    else if (args[i] == "--output")
+                    {
+                        i++;
+                        Settings.OutputPath = args[i];
+                    }
+                    else if (args[i] == "--nousers")
+                    {
+                        Settings.ScrapUsers = false;
+                    }
+                }
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                Console.WriteLine("Invalid arguments");
             }
         }
     }

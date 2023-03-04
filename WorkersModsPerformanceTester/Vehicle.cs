@@ -38,16 +38,36 @@ namespace WorkersModsPerformanceTester
             }
             else if(selectedMaterialFiles.Length > 1)
             {
-                selectedMaterialFiles = selectedMaterialFiles.Where(x => x != "main.mtl").ToArray(); // case if somebody pasted blender main.mtl
-                if(selectedMaterialFiles.Length > 1)
+                foreach(var file in selectedMaterialFiles)
                 {
-                    Console.WriteLine($"Can't match .mtl file for model {NmfPath} from selected:");
-                    foreach (var name in selectedMaterialFiles) Console.WriteLine(name);
-                    TexturesSize = 0;
-                    LODsCount = -1;
-                    Faces = -1;
-                    return;
+                    var firstLine = "";
+                    using(var sr = new StreamReader(file))
+                    {
+                        firstLine = sr.ReadLine();
+                    }
+                    if(!firstLine.Contains("blender", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        selectedMaterialFile = file;
+                        break;
+                    }
                 }
+                if(selectedMaterialFile == "")
+                {
+                    //todo: exception
+                }
+
+
+                // case if somebody pasted blender main.mtl
+                //selectedMaterialFiles = selectedMaterialFiles.Where(x => x != "main.mtl").ToArray(); 
+                //if (selectedMaterialFiles.Length > 1)
+                //{
+                //    Console.WriteLine($"Can't match .mtl file for model {NmfPath} from selected:");
+                //    foreach (var name in selectedMaterialFiles) Console.WriteLine(name);
+                //    TexturesSize = 0;
+                //    LODsCount = -1;
+                //    Faces = -1;
+                //    return;
+                //}
             }
             selectedMaterialFile = selectedMaterialFiles.First();
 
