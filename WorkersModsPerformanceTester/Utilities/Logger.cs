@@ -33,7 +33,7 @@ namespace WorkersModsPerformanceTester.Utilities
             }
         }
 
-        public void Write(Level level,string write)
+        public void Write(Level level,string write, Exception e = null)
         {
             string levelText = "";
             switch (level)
@@ -44,6 +44,20 @@ namespace WorkersModsPerformanceTester.Utilities
             }
 
             var log = DateTime.Now.ToLongTimeString() + "|" + levelText + "|" + write;
+            if(e != null)
+            {
+                log += "|" + e.ToString();
+
+                var value = e.Data["folder"];
+                if (value != null) log += "|folder: " + value;
+                value = e.Data["name"];
+                if (value != null) log += "|name: " + value;
+
+                if(e.InnerException != null)
+                {
+                    log += "|" + e.InnerException.ToString();
+                }
+            }
 
             Console.WriteLine(log);
             try
@@ -53,7 +67,7 @@ namespace WorkersModsPerformanceTester.Utilities
                     writer.WriteLine(log);
                 }
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
                 Console.WriteLine(DateTime.Now.ToLongTimeString() + "|WARN |" + "Unable to write log to file.");
             }

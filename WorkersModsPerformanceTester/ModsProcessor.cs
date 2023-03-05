@@ -45,7 +45,7 @@ namespace WorkersModsPerformanceTester
             }
             catch(DirectoryNotFoundException e)
             {
-                _logger.Write(Level.Error, e.ToString());
+                _logger.Write(Level.Error, $"{modFolders} not found:", e);
             }
 
             int progressBarIterator = 0;
@@ -62,7 +62,7 @@ namespace WorkersModsPerformanceTester
                 catch (Exception e)
                 {
                     continue;
-                    _logger.Write(Level.Warning, e.ToString());
+                    _logger.Write(Level.Warning, "Get modProperties unhandled exception",e);
                 }
                 
                 // Exclude mods that are not vechicles or buildings
@@ -95,7 +95,7 @@ namespace WorkersModsPerformanceTester
             }
             catch(Exception e)
             {
-                _logger.Write(Level.Error, "Unhandled mod processing error: " + e.ToString());
+                _logger.Write(Level.Error, "Unhandled mod processing error: ",e);
             }
         }
 

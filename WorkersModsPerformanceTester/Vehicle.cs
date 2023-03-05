@@ -32,9 +32,13 @@ namespace WorkersModsPerformanceTester
 
             var selectedMaterialFiles = materialFiles.Where(x => !x.Contains("_") && !x.Contains("LOD", StringComparison.InvariantCultureIgnoreCase)).ToArray();  //exclude skins and lods
             string selectedMaterialFile = "";
+
             if (!selectedMaterialFiles.Any())
             {
-                Console.WriteLine($"No .mtl file for model {NmfPath}");
+                var exception = new ApplicationException("No .mtl file for model {NmfPath}");
+                exception.Data.Add("folder", FolderPath);
+                exception.Data.Add("name", Name);
+                throw exception;
             }
             else if(selectedMaterialFiles.Length > 1)
             {
@@ -53,7 +57,10 @@ namespace WorkersModsPerformanceTester
                 }
                 if(selectedMaterialFile == "")
                 {
-                    //todo: exception
+                    var exception =  new ApplicationException("Cannot find material file");
+                    exception.Data.Add("folder", FolderPath);
+                    exception.Data.Add("name", Name);
+                    throw exception;
                 }
 
 

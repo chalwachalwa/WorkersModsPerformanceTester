@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WorkersModsPerformanceTester": {
+      "commandName": "Project",
+      "commandLineArgs": "--output custom.csv"
+    }
+  }
+}

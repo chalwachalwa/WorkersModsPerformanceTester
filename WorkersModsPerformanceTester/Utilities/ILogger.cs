@@ -16,7 +16,7 @@ namespace WorkersModsPerformanceTester.Utilities
     public interface ILogger
     {
         void Write(string write);
-        void Write(Level level, string message);
+        void Write(Level level, string message, Exception e);
         //void Write(Level level, Exception e, string message);
     }
 }
