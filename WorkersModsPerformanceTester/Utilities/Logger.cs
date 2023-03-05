@@ -7,37 +7,33 @@ using System.Threading.Tasks;
 
 namespace WorkersModsPerformanceTester.Utilities
 {
-    internal class Logger : ILogger, IDisposable
+    internal class Logger : ILogger
     {
-        private StreamWriter _writer;
         private int warningCounter;
         private int errorCounter;
 
         public Logger()
         {
-            _writer = new StreamWriter("log.txt");
             Console.WriteLine("Logger initialized"); 
-        }
-
-        public void Dispose()
-        {
-            _writer.Dispose();
         }
 
         public void Write(string write)
         {
-            Console.WriteLine(DateTime.Now.ToShortTimeString() +"|"+ write);
+            Console.WriteLine(DateTime.Now.ToLongTimeString() +"|"+ write);
             try
             {
-                _writer.WriteLine(write);
+                using(var writer = new StreamWriter("log.txt", append: true))
+                {
+                    writer.WriteLine(write);
+                }
             }
             catch(Exception e)
             {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + "|" + "Unable to write log to file.");
+                Console.WriteLine(DateTime.Now.ToLongTimeString() + "|" + "Unable to write log to file.");
             }
         }
 
-        public void Write(Level level,string write)
+        public void Write(Level level,string write, Exception e = null)
         {
             string levelText = "";
             switch (level)
@@ -47,14 +43,33 @@ namespace WorkersModsPerformanceTester.Utilities
                 case Level.Information: levelText   = "INFO "; break;
             }
 
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + "|" + levelText + "|" + write);
+            var log = DateTime.Now.ToLongTimeString() + "|" + levelText + "|" + write;
+            if(e != null)
+            {
+                log += "|" + e.ToString();
+
+                var value = e.Data["folder"];
+                if (value != null) log += "|folder: " + value;
+                value = e.Data["name"];
+                if (value != null) log += "|name: " + value;
+
+                if(e.InnerException != null)
+                {
+                    log += "|" + e.InnerException.ToString();
+                }
+            }
+
+            Console.WriteLine(log);
             try
             {
-                _writer.WriteLine(write);
+                using (var writer = new StreamWriter("log.txt", append: true))
+                {
+                    writer.WriteLine(log);
+                }
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + "|WARN |" + "Unable to write log to file.");
+                Console.WriteLine(DateTime.Now.ToLongTimeString() + "|WARN |" + "Unable to write log to file.");
             }
         }
     }

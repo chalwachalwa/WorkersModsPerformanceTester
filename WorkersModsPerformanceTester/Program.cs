@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using WorkersModsPerformanceTester.Utilities;
-using Unity;
 using System.ComponentModel;
 
 namespace WorkersModsPerformanceTester
